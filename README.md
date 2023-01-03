@@ -1,2 +1,2 @@
 # tcp-chat-server
-TCP Chat Server using Golang net/http package. 
+TCP Chat Server using net/http package. 
