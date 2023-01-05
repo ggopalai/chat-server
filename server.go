@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"reflect"
 )
 
 type server struct {
@@ -29,6 +30,7 @@ func (s *server) newClient(conn net.Conn) *client {
 
 func (s *server) run() {
 	for cmd := range s.commandChan {
+		log.Println("Inside server run function", cmd.id)
 		switch cmd.id {
 		case CMD_NICK:
 			s.name(cmd.client, cmd.args)
@@ -74,7 +76,8 @@ func (s *server) join(c *client, args []string) {
 }
 
 func (s *server) currentRooms(c *client, args []string) {
-
+	rooms := reflect.ValueOf(s.rooms).MapKeys()
+	c.msg(fmt.Sprintf("Available rooms - %s", rooms))
 }
 
 func (s *server) msg(c *client, args []string) {
