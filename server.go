@@ -37,7 +37,7 @@ func (s *server) run() {
 		case CMD_JOIN:
 			s.join(cmd.client, cmd.args)
 		case CMD_ROOMS:
-			s.currentRooms(cmd.client, cmd.args)
+			s.currentRooms(cmd.client)
 		case CMD_MSG:
 			s.msg(cmd.client, cmd.args)
 		case CMD_QUIT:
@@ -54,11 +54,13 @@ func (s *server) name(c *client, args []string) {
 }
 
 func (s *server) join(c *client, args []string) {
+	log.Println("Inside Join")
 	roomName := args[1]
 
 	r, ok := s.rooms[roomName]
 	if !ok {
-		r := &room{
+		log.Println("Creating new room")
+		r = &room{
 			name:    roomName,
 			members: make(map[net.Addr]*client),
 		}
@@ -68,6 +70,7 @@ func (s *server) join(c *client, args []string) {
 	r.members[c.conn.RemoteAddr()] = c
 
 	s.quitCurrentRoom(c)
+	log.Println("Quit current room")
 
 	c.room = r
 
@@ -75,17 +78,18 @@ func (s *server) join(c *client, args []string) {
 	c.msg(fmt.Sprintf("Welcome to %s ", r.name))
 }
 
-func (s *server) currentRooms(c *client, args []string) {
+func (s *server) currentRooms(c *client) {
 	rooms := reflect.ValueOf(s.rooms).MapKeys()
 	c.msg(fmt.Sprintf("Available rooms - %s", rooms))
 }
 
 func (s *server) msg(c *client, args []string) {
-
+	currRoom := c.room
+	currRoom.broadcast(c, args[1])
 }
 
 func (s *server) quitRoom(c *client, args []string) {
-
+	s.quitCurrentRoom(c)
 }
 
 func (s *server) quitCurrentRoom(c *client) {
