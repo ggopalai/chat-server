@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"reflect"
+	"strings"
 )
 
 type server struct {
@@ -30,7 +30,6 @@ func (s *server) newClient(conn net.Conn) *client {
 
 func (s *server) run() {
 	for cmd := range s.commandChan {
-		log.Println("Inside server run function", cmd.id)
 		switch cmd.id {
 		case CMD_NICK:
 			s.name(cmd.client, cmd.args)
@@ -50,11 +49,10 @@ func (s *server) run() {
 func (s *server) name(c *client, args []string) {
 	name := args[1]
 	c.name = name
-	c.msg(fmt.Sprintf("Let's call you %s", name))
+	c.msg(fmt.Sprintf("Successfully set name, hey %s", name))
 }
 
 func (s *server) join(c *client, args []string) {
-	log.Println("Inside Join")
 	roomName := args[1]
 
 	r, ok := s.rooms[roomName]
@@ -70,7 +68,6 @@ func (s *server) join(c *client, args []string) {
 	r.members[c.conn.RemoteAddr()] = c
 
 	s.quitCurrentRoom(c)
-	log.Println("Quit current room")
 
 	c.room = r
 
@@ -79,17 +76,25 @@ func (s *server) join(c *client, args []string) {
 }
 
 func (s *server) currentRooms(c *client) {
-	rooms := reflect.ValueOf(s.rooms).MapKeys()
-	c.msg(fmt.Sprintf("Available rooms - %s", rooms))
+	var rooms []string
+	for room, _ := range s.rooms {
+		rooms = append(rooms, room)
+	}
+	res := strings.Join(rooms, " ")
+	c.msg(fmt.Sprintf("Available rooms - %s", res))
 }
 
 func (s *server) msg(c *client, args []string) {
 	currRoom := c.room
-	currRoom.broadcast(c, args[1])
+	currRoom.broadcast(c, fmt.Sprintf("%s: "+strings.Join(args[1:], " "), c.name))
 }
 
 func (s *server) quitRoom(c *client, args []string) {
+	c.msg("Bye, hope to see you soon.")
 	s.quitCurrentRoom(c)
+
+	// Closes the connection completely. Have another option to quit just the room.
+	c.conn.Close()
 }
 
 func (s *server) quitCurrentRoom(c *client) {
