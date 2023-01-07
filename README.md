@@ -6,18 +6,18 @@ Uses "net" package to establish TCP connections. Each client is handled via goro
 ## Usage 
 
 ### Start Server
-`go build`
-`./tcp-chat`
+`go build`  
+`./tcp-chat`  
 
 ### Establish client connection
-`telnet localhost 8888`
+`telnet localhost 8888`  
 
 ### Client Commands 
-`/name <name>`
-`/rooms`
-`/join <room-name>`
-`/msg <msg>`
-`/quit`
+`/name <name>`  
+`/rooms`  
+`/join <room-name>`  
+`/msg <msg>`  
+`/quit`  
 
 
 
