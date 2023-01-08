@@ -57,7 +57,7 @@ func (s *server) join(c *client, args []string) {
 
 	r, ok := s.rooms[roomName]
 	if !ok {
-		log.Println("Creating new room")
+		log.Println("Creating new room", roomName)
 		r = &room{
 			name:    roomName,
 			members: make(map[net.Addr]*client),
@@ -85,6 +85,11 @@ func (s *server) currentRooms(c *client) {
 }
 
 func (s *server) msg(c *client, args []string) {
+	msg := strings.Join(args[1:], " ")
+	if len(strings.TrimSpace(msg)) == 0 {
+		c.msg("Cant send empty message!")
+		return
+	}
 	currRoom := c.room
 	currRoom.broadcast(c, fmt.Sprintf("%s: "+strings.Join(args[1:], " "), c.name))
 }
