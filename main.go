@@ -1,20 +1,25 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 )
 
 func main() {
-	fmt.Println("TCP Chat Server - WIP")
 	serv := newServer()
+
+	// default room
+	serv.rooms["general"] = &room{
+		name:    "general",
+		members: make(map[net.Addr]*client),
+	}
+
+	go serv.run()
 
 	listener, err := net.Listen("tcp", ":8888")
 	if err != nil {
 		log.Fatalf("Can't start server - %s", err.Error())
 	}
-
 	defer listener.Close()
 	log.Printf("Started server on :8888")
 
