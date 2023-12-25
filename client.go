@@ -14,6 +14,9 @@ type client struct {
 	commandChan chan<- command
 }
 
+// listen to the client connection, 
+// parse the input and 
+// put the command onto the channel
 func (c *client) readInput() {
 	for {
 		msg, err := bufio.NewReader(c.conn).ReadString('\n')
@@ -62,10 +65,12 @@ func (c *client) readInput() {
 	}
 }
 
+// write error to connection
 func (c *client) err(err error) {
 	c.conn.Write([]byte("Error: " + err.Error() + "\n"))
 }
 
+// write message to connection 
 func (c *client) msg(msg string) {
 	c.conn.Write([]byte(">> " + msg + "\n"))
 }

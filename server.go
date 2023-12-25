@@ -8,17 +8,19 @@ import (
 )
 
 type server struct {
-	rooms       map[string]*room
+	roomMap       map[string]*room
 	commandChan chan command
 }
 
+// returns the main server object
 func newServer() *server {
 	return &server{
-		rooms:       make(map[string]*room),
+		roomMap:       make(map[string]*room),
 		commandChan: make(chan command),
 	}
 }
 
+// create a new client using the injected connection object
 func (s *server) newClient(conn net.Conn) *client {
 	log.Printf("new client connected : %s", conn.RemoteAddr().String())
 	return &client{
@@ -28,6 +30,8 @@ func (s *server) newClient(conn net.Conn) *client {
 	}
 }
 
+// runs infinitely as a goroutine and listens to commands from clients
+// before passing it on through the channel.
 func (s *server) run() {
 	for cmd := range s.commandChan {
 		switch cmd.id {
@@ -46,23 +50,26 @@ func (s *server) run() {
 
 }
 
+// set the name and write to client connection
 func (s *server) name(c *client, args []string) {
 	name := args[1]
 	c.name = name
 	c.msg(fmt.Sprintf("Successfully set name, hey %s", name))
 }
 
+// client joins the given room
+// new room is created if it doesn't exist
 func (s *server) join(c *client, args []string) {
 	roomName := args[1]
 
-	r, ok := s.rooms[roomName]
+	r, ok := s.roomMap[roomName]
 	if !ok {
 		log.Println("Creating new room", roomName)
 		r = &room{
 			name:    roomName,
 			members: make(map[net.Addr]*client),
 		}
-		s.rooms[roomName] = r
+		s.roomMap[roomName] = r
 	}
 
 	r.members[c.conn.RemoteAddr()] = c
@@ -75,15 +82,17 @@ func (s *server) join(c *client, args []string) {
 	c.msg(fmt.Sprintf("Welcome to %s ", r.name))
 }
 
+// list out all the currently active rooms 
 func (s *server) currentRooms(c *client) {
 	var rooms []string
-	for room, _ := range s.rooms {
+	for room := range s.roomMap {
 		rooms = append(rooms, room)
 	}
 	res := strings.Join(rooms, " ")
 	c.msg(fmt.Sprintf("Available rooms - %s", res))
 }
 
+// sends a message to the room
 func (s *server) msg(c *client, args []string) {
 	msg := strings.Join(args[1:], " ")
 	if len(strings.TrimSpace(msg)) == 0 {
@@ -94,6 +103,7 @@ func (s *server) msg(c *client, args []string) {
 	currRoom.broadcast(c, fmt.Sprintf("%s: "+strings.Join(args[1:], " "), c.name))
 }
 
+// quits the connection completely, should not be named quitRoom?
 func (s *server) quitRoom(c *client, args []string) {
 	c.msg("Bye, hope to see you soon.")
 	s.quitCurrentRoom(c)
